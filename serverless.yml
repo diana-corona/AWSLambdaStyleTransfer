@@ -1,0 +1,79 @@
+service: style-image-app  ##name of the service
+
+configValidationMode: error
+
+plugins:
+  - serverless-deployment-bucket
+provider:
+  name: aws
+  region: us-east-1 
+  timeout: 300
+  memorySize: 5000
+  lambdaHashingVersion: 20201221
+  ecr:
+    images:
+      style_image_lambda:
+        path: ./
+
+  deploymentBucket:
+    name: style-image-app ## name of s3 bucket with model 
+    serverSideEncryption: AES256
+
+  iamRoleStatements: ## allow role to read from s3 
+    - Effect: Allow
+      Action: 
+        - s3:GetObject
+        - s3:PutObject
+        - s3:DeleteObject
+      Resource:
+        - "arn:aws:s3:::style-image-app/*"  ## name of s3 bucket with model 
+
+functions:
+  style_image_lambda:
+    name: style_image_lambda
+    description: style 
+    image:
+      name: style_image_lambda
+      command:
+        - app/style_image.lambda_handler
+    events:  
+      - http: 
+          path:  /style-image
+          method: GET
+          cors: true
+  style_upload_image_lambda:
+    name:  upload_image_lambda ## aws lambda function
+    description: upload image   
+    image:
+      name: style_image_lambda
+      command:
+        - app/upload_image.lambda_handler
+    events:  
+      - http: 
+          path:  /image
+          method: POST
+          cors: true
+  style_download_image_lambda:
+    name:  download_image_lambda ## aws lambda function
+    description: download image   
+    image:
+      name: style_image_lambda
+      command:
+        - app/download_image.lambda_handler
+    events:  
+      - http: 
+          path:  /image
+          method: GET
+          cors: true
+  style_delete_image_lambda:
+    name:  delete_image_lambda ## aws lambda function
+    description: download image   
+    image:
+      name: style_image_lambda
+      command:
+        - app/delete_image.lambda_handler
+    events:  
+      - http: 
+          path:  /image
+          method: DELETE
+          cors: true
